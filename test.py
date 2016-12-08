@@ -34,7 +34,5 @@ def Main():
 	
 	print "Socket bound to port " + portNo
 
-	print "jodfbgieofjghirefjdb"
-
 if __name__ == '__main__':
 	Main()
