@@ -3,7 +3,7 @@ import socket
 import sys
 import os.path
 
-def ReceiveInformation(name):
+#def ReceiveInformation(name):
 
 
 def Main():
@@ -30,9 +30,19 @@ def Main():
 	print neighbors
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.bind(('', portNo));
+	s.bind(('', int(portNo)));
 	
 	print "Socket bound to port " + portNo
+
+	# Initialise graph
+
+	graph = {}
+	graph[routerId] = []
+
+	for x in neighbors:
+		graph[routerId].append((x[0], float(x[1])))
+
+	print graph
 
 if __name__ == '__main__':
 	Main()
