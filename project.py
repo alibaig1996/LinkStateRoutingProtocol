@@ -3,7 +3,17 @@ import socket
 import sys
 import os.path
 
-#def ReceiveInformation(name):
+neighbors = []
+graph = {}
+mutex = threading.Lock()
+
+def sendLSA(name):
+
+
+def receiveLSA(name):
+
+
+def dijkstrasAlgo(name):
 
 
 def Main():
@@ -20,7 +30,6 @@ def Main():
 		print "Config file does not exist"
 		sys.exit()
 
-	neighbors = []
 	with open(configFile, 'r') as f:
 		noOfNeighbors = f.readline()[0]
 
@@ -36,13 +45,28 @@ def Main():
 
 	# Initialise graph
 
-	graph = {}
 	graph[routerId] = []
 
 	for x in neighbors:
 		graph[routerId].append((x[0], float(x[1])))
 
 	print graph
+
+	# Initialise threads
+
+	sendLSAThread = threading.Thread(target=sendLSA, args=("sendLSA"))
+	receiveLSAThread = threading.Thread(target=receiveLSA, args=("receiveLSA"))
+	dijkstrasAlgoThread = threading.Thread(target=dijkstrasAlgo, args=("dijkstrasAlgo"))
+
+	# Start threads
+
+	sendLSAThread.start()
+	receiveLSAThread.start()
+	dijkstrasAlgoThread.start()
+
+	sendLSAThread.join()
+	receiveLSAThread.join()
+	dijkstrasAlgoThread.join()
 
 if __name__ == '__main__':
 	Main()
