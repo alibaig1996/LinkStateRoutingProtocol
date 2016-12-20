@@ -8,29 +8,21 @@ graph = {}
 mutex = threading.Lock()
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-<<<<<<< HEAD
-=======
-def sendLSA(name):
+def sendLSA():
 	# Your code goes here
-	neighborsList = {}
-	for all in neighbors:
-		if all in public:
-			neighborsList.append(public[all])
+	routerId = sys.argv[1]
+	parentString = sys.argv[1]
 
-	packet = ("i am router %s: \n", name)
-	count = 0
-	for router in neighborsList:
-		receiverId = router[0]
-		receiverCost = router[1]
-		receiverPort = router[2]
-		count++
+	for router in neighbors:
+		receiverString = '\n' + " ".join(router)
 
-		receiverString = ("Neighbour %d -> ID : %s   COST : %d  PORT : %d \n", count, receiverId, receiverCost, receiverPort)
+		parentString += receiverString
 
-		packet += receiverString
 
-	return packet
->>>>>>> a7d92c97fd747e27792aa86d6dc4e647f1e3b68f
+	for router in neighbors:
+		prtNo = graph[routerId][2]
+
+		s.sendto(parentString, ('', prtNo))
 
 def receiveLSA():
 
@@ -44,7 +36,7 @@ def receiveLSA():
 		graph[sendingRouter] = []
 		for line in msg:
 			router, cost, prtNo = line.split()
-			graph[sendingRouter].append(tuple(router, float(cost), int(prtNo)))
+			graph[sendingRouter].append((router, float(cost), int(prtNo)))
 
 
 	# Broadcast LSU packet to neighbours
@@ -82,7 +74,7 @@ def Main():
 
 		for line in f:
 			router, cost, prtNo = line.split()
-			neighbors.append(tuple(router, float(cost), int(prtNo)))
+			neighbors.append((router, cost, prtNo))
 
 	print neighbors
 
@@ -95,7 +87,7 @@ def Main():
 	graph[routerId] = []
 
 	for x in neighbors:
-		graph[routerId].append(tuple(x[0], x[1], x[2]))
+		graph[routerId].append((x[0], float(x[1]), int(x[2])))
 
 	print graph
 
@@ -107,7 +99,8 @@ def Main():
 
 	# Start threads
 
-	sendLSAThread.start()
+	sendLSA()
+	#sendLSAThread.start()
 	#receiveLSAThread.start()
 	#dijkstrasAlgoThread.start()
 
