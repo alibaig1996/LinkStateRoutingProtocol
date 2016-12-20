@@ -6,15 +6,42 @@ import os.path
 neighbors = []
 graph = {}
 mutex = threading.Lock()
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-def sendLSA(name):
+def sendLSA():
+	print "Hi 1"
+
+def receiveLSA():
+	print "Hi 2"
+
+	msg, addr = s.recvfrom(1024)
+
+	sendingRouter = msg.readline()
+
+	# Update graph
+
+	if sendingRouter not in graph.keys():
+		graph[sendingRouter] = []
+		for line in msg:
+			router, cost, prtNo = line.split()
+			graph[sendingRouter].append(tuple(router, float(cost), int(prtNo)))
 
 
-def receiveLSA(name):
+	# Broadcast LSU packet to neighbours
+
+	lst = neighbors
+
+	for x in lst:
+		if sendingRouter == x[0]:
+			continue
+		else:
+			s.sendto(msg, ('', x[2]))
 
 
-def dijkstrasAlgo(name):
-
+def dijkstrasAlgo():
+	mutex.acquire()
+	print "Hi 3"
+	mutex.release()
 
 def Main():
 	
@@ -34,11 +61,11 @@ def Main():
 		noOfNeighbors = f.readline()[0]
 
 		for line in f:
-			neighbors.append(tuple(line.split()))
+			router, cost, prtNo = line.split()
+			neighbors.append(tuple(router, float(cost), int(prtNo)))
 
 	print neighbors
 
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(('', int(portNo)));
 	
 	print "Socket bound to port " + portNo
@@ -48,25 +75,25 @@ def Main():
 	graph[routerId] = []
 
 	for x in neighbors:
-		graph[routerId].append((x[0], float(x[1])))
+		graph[routerId].append(tuple(x[0], x[1], x[2]))
 
 	print graph
 
 	# Initialise threads
 
-	sendLSAThread = threading.Thread(target=sendLSA, args=("sendLSA"))
-	receiveLSAThread = threading.Thread(target=receiveLSA, args=("receiveLSA"))
-	dijkstrasAlgoThread = threading.Thread(target=dijkstrasAlgo, args=("dijkstrasAlgo"))
+	sendLSAThread = threading.Thread(target=sendLSA)
+	receiveLSAThread = threading.Thread(target=receiveLSA)
+	dijkstrasAlgoThread = threading.Thread(target=dijkstrasAlgo)
 
 	# Start threads
 
 	sendLSAThread.start()
-	receiveLSAThread.start()
-	dijkstrasAlgoThread.start()
+	#receiveLSAThread.start()
+	#dijkstrasAlgoThread.start()
 
-	sendLSAThread.join()
-	receiveLSAThread.join()
-	dijkstrasAlgoThread.join()
+	#sendLSAThread.join()
+	#receiveLSAThread.join()
+	#dijkstrasAlgoThread.join()
 
 if __name__ == '__main__':
 	Main()
