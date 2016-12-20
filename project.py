@@ -8,7 +8,25 @@ graph = {}
 mutex = threading.Lock()
 
 def sendLSA(name):
+	# Your code goes here
+	neighborsList = {}
+	for all in neighbors:
+		if all in public:
+			neighborsList.append(public[all])
 
+	packet = ("i am router %s: \n", name)
+	count = 0
+	for router in neighborsList:
+		receiverId = router[0]
+		receiverCost = router[1]
+		receiverPort = router[2]
+		count++
+
+		receiverString = ("Neighbour %d -> ID : %s   COST : %d  PORT : %d \n", count, receiverId, receiverCost, receiverPort)
+
+		packet += receiverString
+
+	return packet
 
 def receiveLSA(name):
 
