@@ -8,11 +8,31 @@ graph = {}
 mutex = threading.Lock()
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-def sendLSA():
-	print "Hi 1"
+<<<<<<< HEAD
+=======
+def sendLSA(name):
+	# Your code goes here
+	neighborsList = {}
+	for all in neighbors:
+		if all in public:
+			neighborsList.append(public[all])
+
+	packet = ("i am router %s: \n", name)
+	count = 0
+	for router in neighborsList:
+		receiverId = router[0]
+		receiverCost = router[1]
+		receiverPort = router[2]
+		count++
+
+		receiverString = ("Neighbour %d -> ID : %s   COST : %d  PORT : %d \n", count, receiverId, receiverCost, receiverPort)
+
+		packet += receiverString
+
+	return packet
+>>>>>>> a7d92c97fd747e27792aa86d6dc4e647f1e3b68f
 
 def receiveLSA():
-	print "Hi 2"
 
 	msg, addr = s.recvfrom(1024)
 
