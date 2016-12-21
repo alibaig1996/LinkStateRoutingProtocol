@@ -2,6 +2,7 @@ import threading
 import socket
 import sys
 import os.path
+import time
 
 neighbors = []
 graph = {}
@@ -9,45 +10,51 @@ mutex = threading.Lock()
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def sendLSA():
-	# Your code goes here
-	routerId = sys.argv[1]
-	parentString = sys.argv[1]
+	while True:
+		time.sleep(5)
+		print "Sending packets"
+		print s
+		routerId = sys.argv[1]
+		parentString = sys.argv[1]
 
-	for router in neighbors:
-		receiverString = '\n' + " ".join(router)
+		for router in neighbors:
+			receiverString = '\n' + " ".join(router)
 
-		parentString += receiverString
+			parentString += receiverString
 
-
-	for router in neighbors:
-		prtNo = graph[routerId][2]
-
-		s.sendto(parentString, ('', prtNo))
+		for i in range(0, len(neighbors)):
+			prtNo = graph[routerId][i][2]
+			s.sendto(parentString, ('localhost', prtNo))
 
 def receiveLSA():
+	while True:
+		print "Waiting..."
+		msg, addr = s.recvfrom(1024)
+		print "Received " + str(len(msg)) + "bytes of data from " + str(addr)
+		msgList = msg.splitlines()
 
-	msg, addr = s.recvfrom(1024)
+		print msg
 
-	sendingRouter = msg.readline()
+		sendingRouter = msgList[0]
 
-	# Update graph
+		# Update graph
 
-	if sendingRouter not in graph.keys():
-		graph[sendingRouter] = []
-		for line in msg:
-			router, cost, prtNo = line.split()
-			graph[sendingRouter].append((router, float(cost), int(prtNo)))
+		if sendingRouter not in graph.keys():
+			graph[sendingRouter] = []
+			for i in range(1, len(msgList)):
+				router, cost, prtNo = msgList[i].split()
+				graph[sendingRouter].append((router, float(cost), int(prtNo)))
 
 
-	# Broadcast LSU packet to neighbours
+		# Broadcast LSU packet to neighbours
 
-	lst = neighbors
+		lst = neighbors
 
-	for x in lst:
-		if sendingRouter == x[0]:
-			continue
-		else:
-			s.sendto(msg, ('', x[2]))
+		for x in lst:
+			if sendingRouter == x[0]:
+				continue
+			else:
+				s.sendto(msg, ('localhost', int(x[2])))
 
 
 def dijkstrasAlgo():
@@ -78,7 +85,7 @@ def Main():
 
 	print neighbors
 
-	s.bind(('', int(portNo)));
+	s.bind(('localhost', int(portNo)));
 	
 	print "Socket bound to port " + portNo
 
@@ -99,9 +106,8 @@ def Main():
 
 	# Start threads
 
-	sendLSA()
-	#sendLSAThread.start()
-	#receiveLSAThread.start()
+	sendLSAThread.start()
+	receiveLSAThread.start()
 	#dijkstrasAlgoThread.start()
 
 	#sendLSAThread.join()
