@@ -54,34 +54,53 @@ def receiveLSA():
 
 
 def dijkstrasAlgo():
-	
+	print "I am router " + sys.argv[1]
 	visited = {}
 	unvisited = {}
+	paths = {}
 	for n in graph.keys():
 		unvisited[n] = None
+		paths[n] = None
 
-	currentNode = sys.argv[1]
+	currentNode = 'A'
 	currentNodeDistance = 0
 	unvisited[currentNode] = currentNodeDistance
 
 	while True:
-		for n, d in graph[currentNode].items():
-			if n not in visited: continue
-			newDistance = currentNodeDistance + d
-			if unvisited[n] is None or unvisited[n] > newDistance:
-				unvisited[n] = newDistance
+	for n, d in graph[currentNode].items():
+		if n not in unvisited: 
+			continue
+		newDistance = currentNodeDistance + d
+		if unvisited[n] is None or unvisited[n] > newDistance:
+			unvisited[n] = newDistance
+			paths[n] = currentNode
+
 		visited[currentNode] = currentNodeDistance
 		del unvisited[currentNode]
-		if not unvisited: break
+
+		if not unvisited: 
+			break
+
 		candidates = []
-
-		for n in unvisted.items():
+		for n in unvisited.items():
 			if n[1]:
-				candidates.append = n
+				candidates.append(n)
 
-		 currentNode, currentNodeDistance = sorted(candidates, key = lambda x: x[1])[0]
+		currentNode, currentNodeDistance = sorted(candidates, key = lambda x: x[1])[0]
 
-	print visited
+	nodes = graph.keys()
+	nodes.remove('A')
+
+	for i in nodes:
+		lst = []
+		target = i
+
+		while paths[i]:
+			lst.insert(0, i)
+			i = paths[i]
+
+		lst.insert(0, i)
+		print "Least cost path to router " + target + ": " + ''.join(lst) + " and the cost is: " + str(visited[target])
 
 
 
