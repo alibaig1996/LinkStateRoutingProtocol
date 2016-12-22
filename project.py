@@ -54,7 +54,36 @@ def receiveLSA():
 
 
 def dijkstrasAlgo():
-	mutex.release()
+	
+	visited = {}
+	unvisited = {}
+	for n in graph.keys():
+		unvisited[n] = None
+
+	currentNode = sys.argv[1]
+	currentNodeDistance = 0
+	unvisited[currentNode] = currentNodeDistance
+
+	while True:
+		for n, d in graph[currentNode].items():
+			if n not in visited: continue
+			newDistance = currentNodeDistance + d
+			if unvisited[n] is None or unvisited[n] > newDistance:
+				unvisited[n] = newDistance
+		visited[currentNode] = currentNodeDistance
+		del unvisited[currentNode]
+		if not unvisited: break
+		candidates = []
+
+		for n in unvisted.items():
+			if n[1]:
+				candidates.append = n
+
+		 currentNode, currentNodeDistance = sorted(candidates, key = lambda x: x[1])[0]
+
+	print visited
+
+
 
 def Main():
 	
