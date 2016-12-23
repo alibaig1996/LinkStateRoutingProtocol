@@ -14,7 +14,13 @@ def sendLSA():
 	while True:
 		time.sleep(1)
 		routerId = sys.argv[1]
-		parentString = sys.argv[1]
+		parentString = ""
+
+		for x in neighbours:
+			parentString += x[0]
+
+		parentString += '\n' 
+		parentString += routerId
 
 		for router in neighbors:
 			receiverString = '\n' + " ".join(router)
@@ -30,27 +36,36 @@ def receiveLSA():
 		msg, addr = s.recvfrom(1024)
 		msgList = msg.splitlines()
 
-		sendingRouter = msgList[0]
+		sendLst = list(msgList[0])
+		sendingRouter = msgList[1]
 
 		# Update graph
 
 		if sendingRouter not in graph.keys():
 			graph[sendingRouter] = {}
-			for i in range(1, len(msgList)):
+			for i in range(2, len(msgList)):
 				router, cost, prtNo = msgList[i].split()
 				graph[sendingRouter][router] =  (float(cost), int(prtNo))
 
 
 		# Broadcast LSU packet to neighbours
 
+		del msgList[0]
 		lst = neighbors
+		n = []
 
 		for x in lst:
+			n.append(x[0])
+
+		neighborsToSend = [x for x in n if n not in sendLst]
+		msg2 = ''.join(neighborsToSend) + ''.join(sendLst) + '\n' + '\n'.join(msgList)
+
+
+		for x in neighborsToSend:
 			if sendingRouter == x[0]:
 				continue
 			else:
-				s.sendto(msg, ('localhost', int(x[2])))
-
+				s.sendto(msg2, ('localhost', int(x[2])))
 
 def dijkstrasAlgo():
 	while True:
@@ -105,8 +120,6 @@ def dijkstrasAlgo():
 			lst.insert(0, i)
 			print "Least cost path to router " + target + ": " + ''.join(lst) + " and the cost is: " + str(visited[target])
 
-
-
 def Main():
 	
 	if len(sys.argv) < 4:
@@ -149,7 +162,7 @@ def Main():
 
 	sendLSAThread.start()
 	receiveLSAThread.start()
-	dijkstrasAlgoThread.start()
+	#dijkstrasAlgoThread.start()
 
 	#sendLSAThread.join()
 	#receiveLSAThread.join()
