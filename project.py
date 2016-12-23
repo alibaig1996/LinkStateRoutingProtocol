@@ -16,7 +16,7 @@ def sendLSA():
 		routerId = sys.argv[1]
 		parentString = ""
 
-		for x in neighbours:
+		for x in neighbors:
 			parentString += x[0]
 
 		parentString += '\n' 
@@ -61,10 +61,10 @@ def receiveLSA():
 		msg2 = ''.join(neighborsToSend) + ''.join(sendLst) + '\n' + '\n'.join(msgList)
 
 
-		for x in neighborsToSend:
+		for x in lst:
 			if sendingRouter == x[0]:
 				continue
-			else:
+			elif x[0] in neighborsToSend:
 				s.sendto(msg2, ('localhost', int(x[2])))
 
 def dijkstrasAlgo():
@@ -162,7 +162,7 @@ def Main():
 
 	sendLSAThread.start()
 	receiveLSAThread.start()
-	#dijkstrasAlgoThread.start()
+	dijkstrasAlgoThread.start()
 
 	#sendLSAThread.join()
 	#receiveLSAThread.join()
