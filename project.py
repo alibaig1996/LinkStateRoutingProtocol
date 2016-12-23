@@ -10,8 +10,9 @@ graph = {}
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def sendLSA():
+	time.sleep(10)
 	while True:
-		time.sleep(5)
+		time.sleep(1)
 		routerId = sys.argv[1]
 		parentString = sys.argv[1]
 
@@ -50,57 +51,59 @@ def receiveLSA():
 			else:
 				s.sendto(msg, ('localhost', int(x[2])))
 
-		print json.dumps(graph, sort_keys=True, indent=4, separators=(',', ': '))
-
 
 def dijkstrasAlgo():
-	print "I am router " + sys.argv[1]
-	visited = {}
-	unvisited = {}
-	paths = {}
-	for n in graph.keys():
-		unvisited[n] = None
-		paths[n] = None
-
-	currentNode = 'A'
-	currentNodeDistance = 0
-	unvisited[currentNode] = currentNodeDistance
-
 	while True:
-	for n, d in graph[currentNode].items():
-		if n not in unvisited: 
-			continue
-		newDistance = currentNodeDistance + d
-		if unvisited[n] is None or unvisited[n] > newDistance:
-			unvisited[n] = newDistance
-			paths[n] = currentNode
+		time.sleep(30)
+		print json.dumps(graph, sort_keys=True, indent=4, separators=(',', ': '))
+		print ""
+		print "I am router " + sys.argv[1]
+		visited = {}
+		unvisited = {}
+		paths = {}
+		for n in graph.keys():
+			unvisited[n] = None
+			paths[n] = None
 
-		visited[currentNode] = currentNodeDistance
-		del unvisited[currentNode]
+		currentNode = sys.argv[1]
+		currentNodeDistance = 0
+		unvisited[currentNode] = currentNodeDistance
 
-		if not unvisited: 
-			break
+		while True:
+			for n, d in graph[currentNode].items():
+				if n not in unvisited: 
+					continue
+				newDistance = currentNodeDistance + d[0]
+				if unvisited[n] is None or unvisited[n] > newDistance:
+					unvisited[n] = newDistance
+					paths[n] = currentNode
 
-		candidates = []
-		for n in unvisited.items():
-			if n[1]:
-				candidates.append(n)
+			visited[currentNode] = currentNodeDistance
+			del unvisited[currentNode]
 
-		currentNode, currentNodeDistance = sorted(candidates, key = lambda x: x[1])[0]
+			if not unvisited: 
+				break
 
-	nodes = graph.keys()
-	nodes.remove('A')
+			candidates = []
+			for n in unvisited.items():
+				if n[1]:
+					candidates.append(n)
 
-	for i in nodes:
-		lst = []
-		target = i
+			currentNode, currentNodeDistance = sorted(candidates, key = lambda x: x[1])[0]
 
-		while paths[i]:
+		nodes = graph.keys()
+		nodes.remove(sys.argv[1])
+
+		for i in nodes:
+			lst = []
+			target = i
+
+			while paths[i]:
+				lst.insert(0, i)
+				i = paths[i]
+
 			lst.insert(0, i)
-			i = paths[i]
-
-		lst.insert(0, i)
-		print "Least cost path to router " + target + ": " + ''.join(lst) + " and the cost is: " + str(visited[target])
+			print "Least cost path to router " + target + ": " + ''.join(lst) + " and the cost is: " + str(visited[target])
 
 
 
@@ -146,7 +149,7 @@ def Main():
 
 	sendLSAThread.start()
 	receiveLSAThread.start()
-	#dijkstrasAlgoThread.start()
+	dijkstrasAlgoThread.start()
 
 	#sendLSAThread.join()
 	#receiveLSAThread.join()
