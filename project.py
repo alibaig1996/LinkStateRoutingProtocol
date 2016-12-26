@@ -7,19 +7,20 @@ import json
 
 neighbors = []
 graph = {}
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+portNo = 0
 globalDict = {}
 
 def sendLSA():
-	time.sleep(10)
+	time.sleep(5)
 	while True:
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		#s.bind(('localhost', int(portNo)))
 		time.sleep(1)
 		routerId = sys.argv[1]
 		parentString = ""
 
 		for x in neighbors:
-			if x[0] in graph.keys():
-				parentString += x[0]
+			parentString += x[0]
 
 		parentString += '\n' 
 		parentString += routerId
@@ -32,8 +33,11 @@ def sendLSA():
 		for i in neighbors:
 			prtNo = graph[routerId][i[0]][1]
 			s.sendto(parentString, ('localhost', prtNo))
+		s.close()
 
 def receiveLSA():
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.bind(('localhost', int(portNo)))
 	while True:
 		msg, addr = s.recvfrom(1024)
 		msgList = msg.splitlines()
@@ -57,9 +61,10 @@ def receiveLSA():
 				globalDict[x] = [True,0]
 			else:
 				globalDict[x][1] += 1			
-				if globalDict[x][1] >= 5:
+				if globalDict[x][1] >= 20:
 					globalDict[x][0] = False
-					del graph[x]
+					if x in graph.keys():
+						del graph[x]
 
 		# Broadcast LSU packet to neighbours
 
@@ -68,8 +73,7 @@ def receiveLSA():
 		n = []
 
 		for x in lst:
-			if x[0] in graph.keys():
-				n.append(x[0])
+			n.append(x[0])
 
 		neighborsToSend = [x for x in n if n not in sendLst]
 		msg2 = ''.join(neighborsToSend) + ''.join(sendLst) + '\n' + '\n'.join(msgList)
@@ -78,12 +82,13 @@ def receiveLSA():
 		for x in lst:
 			if sendingRouter == x[0]:
 				continue
-			elif x[0] in neighborsToSend and x[0] in graph.keys():
+			elif x[0] in neighborsToSend:
 				s.sendto(msg2, ('localhost', int(x[2])))
 
 def dijkstrasAlgo():
 	while True:
 		time.sleep(30)
+		print globalDict
 		print json.dumps(graph, sort_keys=True, indent=4, separators=(',', ': '))
 		print ""
 		print "I am router " + sys.argv[1]
@@ -141,6 +146,7 @@ def Main():
 		sys.exit()
 
 	routerId = sys.argv[1]
+	global portNo
 	portNo = sys.argv[2]
 	configFile = "routers\\" + sys.argv[3]
 
@@ -155,7 +161,7 @@ def Main():
 			router, cost, prtNo = line.split()
 			neighbors.append((router, cost, prtNo))
 
-	s.bind(('localhost', int(portNo)));
+	#s.bind(('localhost', int(portNo)));
 
 	# Initialise graph
 
