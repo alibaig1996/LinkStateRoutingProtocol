@@ -8,6 +8,7 @@ import json
 neighbors = []
 graph = {}
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+globalDict = {}
 
 def sendLSA():
 	time.sleep(10)
@@ -17,7 +18,8 @@ def sendLSA():
 		parentString = ""
 
 		for x in neighbors:
-			parentString += x[0]
+			if x[0] in graph.keys():
+				parentString += x[0]
 
 		parentString += '\n' 
 		parentString += routerId
@@ -35,7 +37,7 @@ def receiveLSA():
 	while True:
 		msg, addr = s.recvfrom(1024)
 		msgList = msg.splitlines()
-
+		
 		sendLst = list(msgList[0])
 		sendingRouter = msgList[1]
 
@@ -47,6 +49,17 @@ def receiveLSA():
 				router, cost, prtNo = msgList[i].split()
 				graph[sendingRouter][router] =  (float(cost), int(prtNo))
 
+		if sendingRouter not in globalDict.keys():
+			globalDict[sendingRouter] = [True,0]
+
+		for x in globalDict.keys():
+			if x == sendingRouter:
+				globalDict[x] = [True,0]
+			else:
+				globalDict[x][1] += 1			
+				if globalDict[x][1] >= 5:
+					globalDict[x][0] = False
+					del graph[x]
 
 		# Broadcast LSU packet to neighbours
 
@@ -55,7 +68,8 @@ def receiveLSA():
 		n = []
 
 		for x in lst:
-			n.append(x[0])
+			if x[0] in graph.keys():
+				n.append(x[0])
 
 		neighborsToSend = [x for x in n if n not in sendLst]
 		msg2 = ''.join(neighborsToSend) + ''.join(sendLst) + '\n' + '\n'.join(msgList)
@@ -64,7 +78,7 @@ def receiveLSA():
 		for x in lst:
 			if sendingRouter == x[0]:
 				continue
-			elif x[0] in neighborsToSend:
+			elif x[0] in neighborsToSend and x[0] in graph.keys():
 				s.sendto(msg2, ('localhost', int(x[2])))
 
 def dijkstrasAlgo():
@@ -149,6 +163,7 @@ def Main():
 
 	for x in neighbors:
 		graph[routerId][x[0]] =  (float(x[1]), int(x[2]))
+		globalDict[x[0]] = [True, 0] 
 
 	print graph
 
