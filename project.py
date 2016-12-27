@@ -8,9 +8,10 @@ import json
 neighbors = []
 graph = {}
 portNo = 0
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+globalDict = {}
 
 def sendLSA():
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	time.sleep(5)
 	while True:
 		#s.bind(('localhost', int(portNo)))
@@ -31,10 +32,13 @@ def sendLSA():
 
 		for i in neighbors:
 			prtNo = graph[routerId][i[0]][1]
+			#print "SENDTO: " + i[0]
 			s.sendto(parentString, ('localhost', prtNo))
 		#s.close()
 
 def receiveLSA():
+	global globalDict
+	global graph
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(('localhost', int(portNo)))
 	i = 0
@@ -56,36 +60,44 @@ def receiveLSA():
 					router, cost, prtNo = msgList[i].split()
 					graph[sendingRouter][router] =  (float(cost), int(prtNo))
 
-			# if sendingRouter not in globalDict.keys():
-			# 	globalDict[sendingRouter] = [True,0]
+			if sendingRouter not in globalDict.keys():
+				globalDict[sendingRouter] = [True,0]
 
-			# for x in globalDict.keys():
-			# 	if x == sendingRouter:
-			# 		globalDict[x] = [True,0]
-			# 	else:
-			# 		globalDict[x][1] += 1			
-			# 		if globalDict[x][1] >= 20:
-			# 			globalDict[x][0] = False
-			# 			if x in graph.keys():
-			# 				del graph[x]
+			for x in globalDict.keys():
+				if x == sendingRouter:
+					#print "Resetting " + x
+					globalDict[x] = [True,0]
+				else:
+					globalDict[x][1] += 1			
+					if globalDict[x][1] >= 20:
+						globalDict[x][0] = False
 
 			# Broadcast LSU packet to neighbours
 
 			del msgList[0]
 			lst = neighbors
 			n = []
+			neighborsToSend = []
 
 			for x in lst:
 				n.append(x[0])
 
-			neighborsToSend = [x for x in n if n not in sendLst]
+			for x in n:
+				#print x, sendLst
+				if x not in sendLst:
+					#print "here"
+					neighborsToSend.append(x)
+			#neighborsToSend = [x for x in n if n not in sendLst]
 			msg2 = ''.join(neighborsToSend) + ''.join(sendLst) + '\n' + '\n'.join(msgList)
 
-
+			# print neighborsToSend, sendLst
+			# print msg2
+			# time.sleep(5)
 			for x in lst:
 				if sendingRouter == x[0]:
 					continue
 				elif x[0] in neighborsToSend:
+					#print "sending to " + x[0] + " NTS: " + str(neighborsToSend)
 					s.sendto(msg2, ('localhost', int(x[2])))
 
 		except Exception as e:
@@ -94,25 +106,38 @@ def receiveLSA():
 	
 
 def dijkstrasAlgo():
+	global globalDict
+	global graph
 	while True:
-		time.sleep(30)
-		#print globalDict
-		print json.dumps(graph, sort_keys=True, indent=4, separators=(',', ': '))
-		print ""
+		time.sleep(20)
+		g2 = dict(graph)
+		gd2 = dict(globalDict)
+		gd2[str(sys.argv[1])] = [True, 0]
+		# print gd2
+		# print json.dumps(g2, sort_keys=True, indent=4, separators=(',', ': '))
+		# print ""
+		# print json.dumps(gd2, sort_keys=True, indent=4, separators=(',', ': '))
+
 		print "I am router " + sys.argv[1]
 		visited = {}
 		unvisited = {}
 		paths = {}
-		for n in graph.keys():
-			unvisited[n] = None
-			paths[n] = None
+		
+		for n in g2.keys(): 
+			if gd2[n][0] == True:
+				unvisited[n] = None
+				paths[n] = None
+			else:
+				# print "Deleting " + n
+				# print gd2
+				del g2[n]
 
-		currentNode = sys.argv[1]
+		currentNode = str(sys.argv[1])
 		currentNodeDistance = 0
 		unvisited[currentNode] = currentNodeDistance
 
 		while True:
-			for n, d in graph[currentNode].items():
+			for n, d in g2[currentNode].items():
 				if n not in unvisited: 
 					continue
 				newDistance = currentNodeDistance + d[0]
@@ -133,7 +158,7 @@ def dijkstrasAlgo():
 
 			currentNode, currentNodeDistance = sorted(candidates, key = lambda x: x[1])[0]
 
-		nodes = graph.keys()
+		nodes = g2.keys()
 		nodes.remove(sys.argv[1])
 
 		for i in nodes:
@@ -176,7 +201,7 @@ def Main():
 	# Initialise graph
 
 	graph[routerId] = {}
-
+	globalDict[routerId] = [True, 0]
 	for x in neighbors:
 		graph[routerId][x[0]] =  (float(x[1]), int(x[2]))
 		#globalDict[x[0]] = [True, 0] 
