@@ -8,13 +8,12 @@ import json
 neighbors = []
 graph = {}
 portNo = 0
-globalDict = {}
+routerStatus = {}
 
 def sendLSA():
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	time.sleep(5)
+	#time.sleep(5)
 	while True:
-		#s.bind(('localhost', int(portNo)))
 		time.sleep(1)
 		routerId = sys.argv[1]
 		parentString = ""
@@ -32,20 +31,16 @@ def sendLSA():
 
 		for i in neighbors:
 			prtNo = graph[routerId][i[0]][1]
-			#print "SENDTO: " + i[0]
 			s.sendto(parentString, ('localhost', prtNo))
-		#s.close()
 
 def receiveLSA():
-	global globalDict
+	global routerStatus
 	global graph
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(('localhost', int(portNo)))
 	i = 0
 	while True:
 		try:
-			# i+=1 
-			# if i%2 == 0: print s
 			msg, addr = s.recvfrom(1024)
 			msgList = msg.splitlines()
 			
@@ -60,17 +55,16 @@ def receiveLSA():
 					router, cost, prtNo = msgList[i].split()
 					graph[sendingRouter][router] =  (float(cost), int(prtNo))
 
-			if sendingRouter not in globalDict.keys():
-				globalDict[sendingRouter] = [True,0]
+			if sendingRouter not in routerStatus.keys():
+				routerStatus[sendingRouter] = [True,0]
 
-			for x in globalDict.keys():
+			for x in routerStatus.keys():
 				if x == sendingRouter:
-					#print "Resetting " + x
-					globalDict[x] = [True,0]
+					routerStatus[x] = [True,0]
 				else:
-					globalDict[x][1] += 1			
-					if globalDict[x][1] >= 20:
-						globalDict[x][0] = False
+					routerStatus[x][1] += 1			
+					if routerStatus[x][1] >= 20:
+						routerStatus[x][0] = False
 
 			# Broadcast LSU packet to neighbours
 
@@ -83,40 +77,28 @@ def receiveLSA():
 				n.append(x[0])
 
 			for x in n:
-				#print x, sendLst
 				if x not in sendLst:
-					#print "here"
 					neighborsToSend.append(x)
-			#neighborsToSend = [x for x in n if n not in sendLst]
 			msg2 = ''.join(neighborsToSend) + ''.join(sendLst) + '\n' + '\n'.join(msgList)
 
-			# print neighborsToSend, sendLst
-			# print msg2
-			# time.sleep(5)
 			for x in lst:
 				if sendingRouter == x[0]:
 					continue
 				elif x[0] in neighborsToSend:
-					#print "sending to " + x[0] + " NTS: " + str(neighborsToSend)
 					s.sendto(msg2, ('localhost', int(x[2])))
 
 		except Exception as e:
 			s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 			s.bind(('localhost', int(portNo)))
 	
-
 def dijkstrasAlgo():
-	global globalDict
+	global routerStatus
 	global graph
 	while True:
 		time.sleep(20)
 		g2 = dict(graph)
-		gd2 = dict(globalDict)
+		gd2 = dict(routerStatus)
 		gd2[str(sys.argv[1])] = [True, 0]
-		# print gd2
-		# print json.dumps(g2, sort_keys=True, indent=4, separators=(',', ': '))
-		# print ""
-		# print json.dumps(gd2, sort_keys=True, indent=4, separators=(',', ': '))
 
 		print "I am router " + sys.argv[1]
 		visited = {}
@@ -128,8 +110,6 @@ def dijkstrasAlgo():
 				unvisited[n] = None
 				paths[n] = None
 			else:
-				# print "Deleting " + n
-				# print gd2
 				del g2[n]
 
 		currentNode = str(sys.argv[1])
@@ -174,6 +154,8 @@ def dijkstrasAlgo():
 
 def Main():
 	
+	# Checking command line arguments and assigning them to appropriate variables
+
 	if len(sys.argv) < 4:
 		print "Not enough arguments for script to execute"
 		sys.exit()
@@ -187,8 +169,6 @@ def Main():
 		print "Config file does not exist"
 		sys.exit()
 
-	#ss.bind(('localhost', int(portNo)))
-
 	with open(configFile, 'r') as f:
 		noOfNeighbors = f.readline()[0]
 
@@ -196,15 +176,13 @@ def Main():
 			router, cost, prtNo = line.split()
 			neighbors.append((router, cost, prtNo))
 
-	#s.bind(('localhost', int(portNo)));
-
 	# Initialise graph
 
 	graph[routerId] = {}
-	globalDict[routerId] = [True, 0]
+	routerStatus[routerId] = [True, 0]
+	
 	for x in neighbors:
 		graph[routerId][x[0]] =  (float(x[1]), int(x[2]))
-		#globalDict[x[0]] = [True, 0] 
 
 	print graph
 
@@ -219,10 +197,6 @@ def Main():
 	sendLSAThread.start()
 	receiveLSAThread.start()
 	dijkstrasAlgoThread.start()
-
-	#sendLSAThread.join()
-	#receiveLSAThread.join()
-	#dijkstrasAlgoThread.join()
 
 if __name__ == '__main__':
 	Main()
